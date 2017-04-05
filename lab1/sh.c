@@ -16,7 +16,7 @@
 #define MAXBUF		(512)		/* max length of input line. */
 #define MAX_ARG		(100)		/* max number of cmd line arguments. */
 
-typedef enum { 
+typedef enum {
 	AMPERSAND, 			/* & */
 	NEWLINE,			/* end of line reached. */
 	NORMAL,				/* file name or command option. */
@@ -113,19 +113,19 @@ int gettoken(char** outptr)
 	case '<':
 		type = INPUT;
 		break;
-	
+
 	case '>':
 		type = OUTPUT;
 		break;
-	
+
 	case '&':
 		type = AMPERSAND;
 		break;
-	
+
 	case '|':
-		type = PIPE; 
+		type = PIPE;
 		break;
-	
+
 	default:
 		type = NORMAL;
 
@@ -134,7 +134,7 @@ int gettoken(char** outptr)
 	}
 
 	*token++ = 0; /* null-terminate the string. */
-	
+
 	return type;
 }
 
@@ -158,79 +158,79 @@ void error(char *fmt, ...)
 
 }
 
+
+char* get_program(char* prog){
+	list_t* currpath = path_dir_list;
+	do {
+		int length = strlen((char*)currpath->data) + strlen(prog) + 2;
+		char* progpath = (char*) malloc(sizeof(char)*length);
+		snprintf(progpath,length,"%s/%s",(char*) currpath->data, prog);
+		if (access(progpath, X_OK) == 0) {
+			return progpath;
+		}
+		currpath = currpath->succ;
+	} while (currpath != path_dir_list);
+	return NULL;
+}
+
 /* run_program: fork and exec a program. */
 void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
-{	
+{
 	if (strcmp(argv[0], "cd") == 0) {
-		char* cwd;
-		cwd = getcwd(0,0);	
-		char* tmppwd =  getenv("PWD");
-		if (argv[1] == NULL) {
-			error("expected argument to cd");
-		} else if (strcmp(argv[1], "-") == 0) {
-			//argv[1] = "..";
-			argv[1] = getenv("OLDPWD");
+		char* cwd = getcwd(0,0);
+		if (cwd == NULL) {
+			cwd = "/";
 		}
-		if (chdir(argv[1]) != 0) {
-			error("could not change dir");
+		char* dir = "/";
+		if (argv[1] != NULL) {
+			if (strcmp(argv[1], "-") == 0) {
+				dir = getenv("OLDPWD");
+				if (dir == NULL) {
+					dir = cwd;
+				}
+			} else {
+				dir = argv[1];
+			}
+		}
+		if (chdir(dir) != 0) {
+			error("No such file or directory");
 		} else {
-			setenv("OLDPWD",tmppwd, 1);
-			setenv("PWD", cwd, 1);
+			setenv("OLDPWD",cwd, 1);
+			cwd = getcwd(0,0);
+			if (cwd == NULL) {
+				cwd = "/";
+			}
+			setenv("PWD", cwd , 1);
 		}
-
-			
+		return;
 	}
-		
-	/*int i;
-	for (i = 0; i < argc; i++){
-		printf("%s\n",argv[i]);
-	}*/	
-	list_t* p = path_dir_list;
-	do {
+
+	char* progpath = get_program(argv[0]);
+	if (progpath != NULL){
 		int child_pid;
 		int child_status;
-		int length = strlen((char*)p->data) + strlen(argv[0]) + 2;
-		char s[length];
-		snprintf(s,length,"%s/%s",(char*) p->data,argv[0]);
-		if (access(s, X_OK) == 0) {
-			child_pid = fork();
-			if (child_pid < 0) {
-				error("could not fork");
-			
-			} else if (child_pid == 0){
-
-				if (input_fd != 0){
-					dup2(input_fd, 0);
-					close(input_fd);
-				}
-				if (doing_pipe){
-					int fd[2];	
-					if (pipe(fd)) { error("pipe failed"); }
-					input_fd = fd[0];
-					output_fd = fd[1];
-				}	
-				if (output_fd != 0){
-					dup2(output_fd, 1);
-					close(output_fd);
-				}
-				/*if (doing_pipe) {
-					execv(s, argv);
-					if (argc > 0){
-						//run_program(argv+1,argc -1,true,true);
-					}
-				}*/ else {
-					execv(s, argv);
-				}
-			} else if (foreground) {
-				waitpid(child_pid, &child_status, 0);
-			} 
-
-			break;
+		child_pid = fork();
+		if (child_pid < 0) {
+			error("could not fork");
+		} else if (child_pid == 0){
+			if (input_fd != 0){
+				dup2(input_fd, 0);
+				close(input_fd);
+			}
+			if (output_fd != 0){
+				dup2(output_fd, 1);
+				close(output_fd);
+			}
+			execv(progpath, argv);
+		} else if (foreground) {
+			waitpid(child_pid, &child_status, 0);
 		}
-		p = p->succ;	
-	} while (p != path_dir_list);
-	
-	
+		free(progpath);
+		return;
+	}
+	error("command not found");
+
+
 	/* you need to fork, search for the command in argv[0],
          * setup stdin and stdout of the child process, execv it.
          * the parent should sometimes wait and sometimes not wait for
@@ -238,13 +238,13 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	 * is true then basically you should wait but when we are
 	 * running a command in a pipe such as PROG1 | PROG2 you might
 	 * not want to wait for each of PROG1 and PROG2...
-	 * 
+	 *
 	 * hints:
 	 *  snprintf is useful for constructing strings.
-	 *  access is useful for checking wether a path refers to an 
+	 *  access is useful for checking wether a path refers to an
 	 *      executable program.
-	 * 
-	 * 
+	 *
+	 *
 	 */
 }
 
@@ -262,7 +262,7 @@ void parse_line(void)
 	argc		= 0;
 
 	for (;;) {
-			
+
 		foreground	= true;
 		doing_pipe	= false;
 
@@ -276,7 +276,7 @@ void parse_line(void)
 		case INPUT:
 			type = gettoken(&argv[argc]);
 			if (type != NORMAL) {
-				error("expected file name: but found %s", 
+				error("expected file name: but found %s",
 					argv[argc]);
 				return;
 			}
@@ -291,7 +291,7 @@ void parse_line(void)
 		case OUTPUT:
 			type = gettoken(&argv[argc]);
 			if (type != NORMAL) {
-				error("expected file name: but found %s", 
+				error("expected file name: but found %s",
 					argv[argc]);
 				return;
 			}
@@ -317,7 +317,7 @@ void parse_line(void)
 
 			if (argc == 0)
 				return;
-						
+
 			argv[argc] = NULL;
 
 			run_program(argv, argc, foreground, doing_pipe);
@@ -345,8 +345,8 @@ static void init_search_path(void)
 
 	path = getenv("PATH");
 
-	/* path may look like "/bin:/usr/bin:/usr/local/bin" 
-	 * and this function makes a list with strings 
+	/* path may look like "/bin:/usr/bin:/usr/local/bin"
+	 * and this function makes a list with strings
 	 * "/bin" "usr/bin" "usr/local/bin"
  	 *
 	 */
@@ -390,7 +390,7 @@ static void init_search_path(void)
 #if 0
 	do {
 		printf("%s\n", (char*)p->data);
-		p = p->succ;	
+		p = p->succ;
 	} while (p != path_dir_list);
 #endif
 }
@@ -400,7 +400,7 @@ int main(int argc, char** argv)
 {
 	progname = argv[0];
 
-	init_search_path();	
+	init_search_path();
 
 	while (fetch_line("% ") != EOF)
 		parse_line();
