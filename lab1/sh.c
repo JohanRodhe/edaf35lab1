@@ -161,7 +161,26 @@ void error(char *fmt, ...)
 /* run_program: fork and exec a program. */
 void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 {	
-	
+	if (strcmp(argv[0], "cd") == 0) {
+		char* cwd;
+		cwd = getcwd(0,0);	
+		char* tmppwd =  getenv("PWD");
+		if (argv[1] == NULL) {
+			error("expected argument to cd");
+		} else if (strcmp(argv[1], "-") == 0) {
+			//argv[1] = "..";
+			argv[1] = getenv("OLDPWD");
+		}
+		if (chdir(argv[1]) != 0) {
+			error("could not change dir");
+		} else {
+			setenv("OLDPWD",tmppwd, 1);
+			setenv("PWD", cwd, 1);
+		}
+
+			
+	}
+		
 	/*int i;
 	for (i = 0; i < argc; i++){
 		printf("%s\n",argv[i]);
@@ -185,7 +204,6 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 					close(input_fd);
 				}
 				if (doing_pipe){
-					printf("HEJ");
 					int fd[2];	
 					if (pipe(fd)) { error("pipe failed"); }
 					input_fd = fd[0];
