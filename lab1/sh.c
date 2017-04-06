@@ -178,10 +178,7 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 {
 	if (strcmp(argv[0], "cd") == 0) {
 		char* cwd = getcwd(0,0);
-		if (cwd == NULL) {
-			cwd = "/";
-		}
-		char* dir = "/";
+		char* dir = getenv("HOME");
 		if (argv[1] != NULL) {
 			if (strcmp(argv[1], "-") == 0) {
 				dir = getenv("OLDPWD");
@@ -197,14 +194,10 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 		} else {
 			setenv("OLDPWD",cwd, 1);
 			cwd = getcwd(0,0);
-			if (cwd == NULL) {
-				cwd = "/";
-			}
 			setenv("PWD", cwd , 1);
 		}
 		return;
 	}
-
 	char* progpath = get_program(argv[0]);
 	if (progpath != NULL){
 		int child_pid;
@@ -215,15 +208,17 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 		} else if (child_pid == 0){
 			if (input_fd != 0){
 				dup2(input_fd, 0);
-				close(input_fd);
+				//close(input_fd);
 			}
 			if (output_fd != 0){
 				dup2(output_fd, 1);
-				close(output_fd);
+				//close(output_fd);
 			}
 			execv(progpath, argv);
 		} else if (foreground) {
 			waitpid(child_pid, &child_status, 0);
+
+
 		}
 		free(progpath);
 		return;
@@ -304,6 +299,7 @@ void parse_line(void)
 
 		case PIPE:
 			doing_pipe = true;
+			pipe(pipe_fd);
 
 			/*FALLTHROUGH*/
 
@@ -317,13 +313,28 @@ void parse_line(void)
 
 			if (argc == 0)
 				return;
+			if (doing_pipe){
+				output_fd = pipe_fd[1];
+			}
 
 			argv[argc] = NULL;
 
 			run_program(argv, argc, foreground, doing_pipe);
+			if (output_fd != 0){
+				close(output_fd);
 
-			input_fd	= 0;
-			output_fd	= 0;
+			}
+			if (input_fd != 0){
+				close(input_fd);
+
+			}
+			if (doing_pipe) {
+				input_fd = pipe_fd[0];
+			} else {
+				input_fd = 0;
+			}
+			output_fd = 0;
+
 			argc		= 0;
 
 			if (type == NEWLINE)
