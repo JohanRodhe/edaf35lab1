@@ -179,17 +179,18 @@ static void pagefault(unsigned virt_page)
 	page = take_phys_page();
 	printf("took physpage\n");
 	if (coremap[page].owner != NULL) {
-		if(coremap[page].owner->modified) {
-			if (coremap[page].owner->ondisk) {
-					write_page(page, coremap[page].page);
-			} else {
-				swap_page = new_swap_page();
-				write_page(page, swap_page);
-				coremap[page].page = swap_page;
+		if (coremap[page].owner->ondisk) {
+			if (coremap[page].owner->modified) {
+				write_page(page, coremap[page].page);
 			}
-			coremap[page].owner -> ondisk = 1;
-			coremap[page].owner -> modified = 0;
-		} 
+		} else {
+			swap_page = new_swap_page();
+			write_page(page, swap_page);
+			coremap[page].page = swap_page;
+		}
+
+		coremap[page].owner -> ondisk = 1;
+		coremap[page].owner -> modified = 0;
 		coremap[page].owner -> inmemory = 0;
 		coremap[page].owner -> page = coremap[page].page;
 
@@ -197,7 +198,7 @@ static void pagefault(unsigned virt_page)
 
 	//printf("HEJ: %d\n", page_table[virt_page].ondisk);
 	//printf("Page faults: %llu\n", num_pagefault);
-	
+
 	if (page_table[virt_page].ondisk) {
 		read_page(page, page_table[virt_page].page);
 	}
