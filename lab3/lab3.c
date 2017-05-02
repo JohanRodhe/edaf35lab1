@@ -6,13 +6,13 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define NREG		(32)	
-#define PAGESIZE_WIDTH	(2)	
-#define PAGESIZE	(1<<PAGESIZE_WIDTH)	
+#define NREG		(32)
+#define PAGESIZE_WIDTH	(2)
+#define PAGESIZE	(1<<PAGESIZE_WIDTH)
 #define NPAGES		(2048)
-#define RAM_PAGES	(8)	
+#define RAM_PAGES	(8)
 #define RAM_SIZE	(RAM_PAGES * PAGESIZE)
-#define SWAP_PAGES	(128)	
+#define SWAP_PAGES	(128)
 #define SWAP_SIZE	(SWAP_PAGES * PAGESIZE)
 #undef DEBUG
 
@@ -27,14 +27,14 @@
 #define BF      (8)
 #define BA      (9)
 #define ST      (10)
-#define LD      (11)  
+#define LD      (11)
 #define CALL	(12)
 #define JMP	(13)
 #define MUL	(14)
 #define SEQI	(15)
 #define HALT    (16)
 
-char*	mnemonics[] = { 
+char*	mnemonics[] = {
 	[ADD] = "add",
 	[ADDI] = "addi",
 	[SUB] = "sub",
@@ -74,6 +74,7 @@ typedef struct {
 } coremap_entry_t;
 
 static unsigned long long	num_pagefault;		/* Statistics. */
+static unsigned long long	num_discwrites;		/* Write statistics. */
 static page_table_entry_t	page_table[NPAGES];	/* OS data structure. */
 static coremap_entry_t		coremap[RAM_PAGES];	/* OS data structure. */
 static unsigned			memory[RAM_SIZE];	/* Hardware: RAM. */
@@ -118,15 +119,16 @@ void error(char* fmt, ...)
 
 static void read_page(unsigned phys_page, unsigned swap_page)
 {
-	memcpy(&memory[phys_page * PAGESIZE], 
-		&swap[swap_page * PAGESIZE], 
+	memcpy(&memory[phys_page * PAGESIZE],
+		&swap[swap_page * PAGESIZE],
 		PAGESIZE * sizeof(unsigned));
 }
 
 static void write_page(unsigned phys_page, unsigned swap_page)
 {
-	memcpy(&swap[swap_page * PAGESIZE], 
-		&memory[phys_page * PAGESIZE], 
+	num_discwrites++;
+	memcpy(&swap[swap_page * PAGESIZE],
+		&memory[phys_page * PAGESIZE],
 		PAGESIZE * sizeof(unsigned));
 }
 
@@ -142,7 +144,7 @@ static unsigned new_swap_page()
 static unsigned fifo_page_replace()
 {
 	static int page;
-	
+
 	page = (page + 1) % RAM_PAGES;
 
 	assert(page < RAM_PAGES);
@@ -152,18 +154,43 @@ static unsigned fifo_page_replace()
 
 static unsigned second_chance_replace()
 {
-	int	page;
-	
-	page = INT_MAX; 
+	static int page;
 
+	page = (page + 1) % RAM_PAGES;
+	while(coremap[page].owner != NULL && coremap[page].owner->referenced){
+		coremap[page].owner->referenced = 0;
+		page = (page + 1) % RAM_PAGES;
+	}
 	assert(page < RAM_PAGES);
+
+	return page;
 }
 
 static unsigned take_phys_page()
 {
-	unsigned		page;	/* Page to be replaced. */
+	unsigned page; /* Page to be replaced. */
+	unsigned swap_page;
 
 	page = (*replace)();
+	coremap_entry_t* core_page = &coremap[page];
+
+	if (core_page->owner != NULL){
+		if (core_page->owner->ondisk){
+			if (core_page->owner->modified){
+				write_page(page, core_page->page);
+			}
+		} else {
+			swap_page = new_swap_page();
+			write_page(page, swap_page);
+			core_page->page = swap_page;
+
+
+		}
+		core_page->owner->page = core_page->page;
+		core_page->owner->ondisk = 1;
+		core_page->owner->inmemory = 0;
+		core_page->owner->modified = 0;
+	}
 
 	return page;
 }
@@ -171,42 +198,21 @@ static unsigned take_phys_page()
 static void pagefault(unsigned virt_page)
 {
 	unsigned page;
-	unsigned swap_page;
+	page_table_entry_t* new_owner;
+
 	num_pagefault += 1;
 
-
-
 	page = take_phys_page();
-	printf("took physpage\n");
-	if (coremap[page].owner != NULL) {
-		if (coremap[page].owner->ondisk) {
-			if (coremap[page].owner->modified) {
-				write_page(page, coremap[page].page);
-			}
-		} else {
-			swap_page = new_swap_page();
-			write_page(page, swap_page);
-			coremap[page].page = swap_page;
-		}
+	new_owner = &page_table[virt_page];
 
-		coremap[page].owner -> ondisk = 1;
-		coremap[page].owner -> modified = 0;
-		coremap[page].owner -> inmemory = 0;
-		coremap[page].owner -> page = coremap[page].page;
-
+	if (new_owner->ondisk) {
+		read_page(page, new_owner->page);
 	}
 
-	//printf("HEJ: %d\n", page_table[virt_page].ondisk);
-	//printf("Page faults: %llu\n", num_pagefault);
-
-	if (page_table[virt_page].ondisk) {
-		read_page(page, page_table[virt_page].page);
-	}
-
-	coremap[page].page = page_table[virt_page].page;
-	coremap[page].owner = &page_table[virt_page];
-	page_table[virt_page].inmemory = 1;
-	page_table[virt_page].page = page;
+	coremap[page].page = new_owner->page;
+	coremap[page].owner = new_owner;
+	new_owner->inmemory = 1;
+	new_owner->page = page;
 }
 
 static void translate(unsigned virt_addr, unsigned* phys_addr, bool write)
@@ -289,7 +295,7 @@ void read_program(char* file, unsigned memory[], int* ninstr)
 		write_memory(memory, line, make_instr(opcode, a, b, c));
 
 		line += 1;
-	} 
+	}
 
 	*ninstr = line;
 }
@@ -315,7 +321,7 @@ int run(int argc, char** argv)
 	bool		writeback;
 
 	if (argc > 1)
-		file = argv[1];	
+		file = argv[1];
 	else
 		file = "a.s";
 
@@ -352,47 +358,47 @@ int run(int argc, char** argv)
 			puts("ADD");
 			dest = source1 + source2;
 			break;
-			
+
 		case ADDI:
 			puts("ADDI");
 			dest = source1 + constant;
 			break;
-			
+
 		case SUB:
 			puts("SUB");
 			dest = source1 - source2;
 			break;
-			
+
 		case SUBI:
 			puts("SUBI");
 			dest = source1 - constant;
 			break;
-			
+
 		case MUL:
 			puts("MUL");
 			dest = source1 * source2;
 			break;
-			
+
 		case SGE:
 			puts("SGE");
 			dest = source1 >= source2;
 			break;
-			
+
 		case SGT:
 			puts("SGT");
 			dest = source1 > source2;
 			break;
-			
+
 		case SEQ:
 			puts("SEQ");
 			dest = source1 == source2;
 			break;
-			
+
 		case SEQI:
 			puts("SEQI");
 			dest = source1 == constant;
 			break;
-			
+
 		case BT:
 			puts("BT");
 			writeback = false;
@@ -401,7 +407,7 @@ int run(int argc, char** argv)
 				increment_pc = false;
 			}
 			break;
-				
+
 		case BF:
 			puts("BF");
 			writeback = false;
@@ -410,7 +416,7 @@ int run(int argc, char** argv)
 				increment_pc = false;
 			}
 			break;
-				
+
 		case BA:
 			puts("BA");
 			writeback = false;
@@ -452,12 +458,12 @@ int run(int argc, char** argv)
 			writeback = false;
 			proceed = false;
 			break;
-		
+
 		default:
-			error("illegal instruction at pc = %d: opcode = %d\n", 
+			error("illegal instruction at pc = %d: opcode = %d\n",
 				cpu.pc, opcode);
 		}
-			
+
 		if (writeback && dest_reg != 0)
 			cpu.reg[dest_reg] = dest;
 
@@ -485,7 +491,7 @@ int run(int argc, char** argv)
 			printf("R%02d = %-12d", i, cpu.reg[i]);
 		}
 		printf("\n");
-	
+
 
 	}
 	return 0;
@@ -493,13 +499,21 @@ int run(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-#if 1
-	replace = fifo_page_replace;
-#else
-	replace = second_chance_replace;
-#endif
+	int rep_num = 0;
+	if (argc > 2){
+		rep_num = atoi(argv[2]);
+	}
+	switch (rep_num) {
+		case 1:
+			replace = second_chance_replace;
+			break;
+		default:
+			replace = fifo_page_replace;
+	}
+
 
 	run(argc, argv);
 
 	printf("%llu page faults\n", num_pagefault);
+	printf("%llu disc writes\n", num_discwrites);
 }
