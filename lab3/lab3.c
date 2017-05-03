@@ -156,7 +156,7 @@ static unsigned second_chance_replace()
 {
 	static int 		page;
 
-	page = (page + 1) % RAM_PAGES;
+	//page = (page + 1) % RAM_PAGES;
 	while(coremap[page].owner != NULL && coremap[page].owner->referenced){
 		coremap[page].owner->referenced = 0;
 		page = (page + 1) % RAM_PAGES;
