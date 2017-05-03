@@ -73,8 +73,8 @@ typedef struct {
 	unsigned		page;	/* Swap page of page if assigned. */
 } coremap_entry_t;
 
-static unsigned long long	num_pagefault;		/* Statistics. */
-static unsigned long long	num_discwrites;		/* Write statistics. */
+static unsigned long long	num_pagefault;		/* Page fault statistics. */
+static unsigned long long	num_discwrites;		/* Disc write statistics. */
 static page_table_entry_t	page_table[NPAGES];	/* OS data structure. */
 static coremap_entry_t		coremap[RAM_PAGES];	/* OS data structure. */
 static unsigned			memory[RAM_SIZE];	/* Hardware: RAM. */
@@ -143,7 +143,7 @@ static unsigned new_swap_page()
 
 static unsigned fifo_page_replace()
 {
-	static int page;
+	static int 		page;
 
 	page = (page + 1) % RAM_PAGES;
 
@@ -154,7 +154,7 @@ static unsigned fifo_page_replace()
 
 static unsigned second_chance_replace()
 {
-	static int page;
+	static int 		page;
 
 	page = (page + 1) % RAM_PAGES;
 	while(coremap[page].owner != NULL && coremap[page].owner->referenced){
@@ -166,30 +166,41 @@ static unsigned second_chance_replace()
 	return page;
 }
 
+static unsigned optimal_page_replace()
+{
+	static int 		page;
+
+	page = (page + 1) % RAM_PAGES;
+
+	assert(page < RAM_PAGES);
+
+	return page;
+}
+
 static unsigned take_phys_page()
 {
-	unsigned page; /* Page to be replaced. */
-	unsigned swap_page;
+	unsigned 		page; /* Page to be replaced. */
+	unsigned 		swap_page;
+	coremap_entry_t* 	entry;
 
 	page = (*replace)();
-	coremap_entry_t* core_page = &coremap[page];
+	entry = &coremap[page];
 
-	if (core_page->owner != NULL){
-		if (core_page->owner->ondisk){
-			if (core_page->owner->modified){
-				write_page(page, core_page->page);
+	if (entry->owner != NULL){
+		if (entry->owner->ondisk){
+			if (entry->owner->modified && !entry->owner->readonly){
+				write_page(page, entry->page);
 			}
 		} else {
 			swap_page = new_swap_page();
 			write_page(page, swap_page);
-			core_page->page = swap_page;
-
-
+			entry->page = swap_page;
 		}
-		core_page->owner->page = core_page->page;
-		core_page->owner->ondisk = 1;
-		core_page->owner->inmemory = 0;
-		core_page->owner->modified = 0;
+		entry->owner->page = entry->page;
+		entry->owner->inmemory = 0;
+		entry->owner->ondisk = 1;
+		entry->owner->modified = 0;
+		entry->owner->referenced = 0;
 	}
 
 	return page;
@@ -197,20 +208,22 @@ static unsigned take_phys_page()
 
 static void pagefault(unsigned virt_page)
 {
-	unsigned page;
-	page_table_entry_t* new_owner;
+	unsigned 		page;
+	page_table_entry_t* 	new_owner;
+	coremap_entry_t* 	entry;
 
 	num_pagefault += 1;
 
 	page = take_phys_page();
 	new_owner = &page_table[virt_page];
+	entry = &coremap[page];
 
 	if (new_owner->ondisk) {
 		read_page(page, new_owner->page);
 	}
 
-	coremap[page].page = new_owner->page;
-	coremap[page].owner = new_owner;
+	entry->page = new_owner->page;
+	entry->owner = new_owner;
 	new_owner->inmemory = 1;
 	new_owner->page = page;
 }
@@ -506,6 +519,9 @@ int main(int argc, char** argv)
 	switch (rep_num) {
 		case 1:
 			replace = second_chance_replace;
+			break;
+		case 2:
+			replace = optimal_page_replace;
 			break;
 		default:
 			replace = fifo_page_replace;
