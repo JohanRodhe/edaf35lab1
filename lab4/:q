@@ -60,7 +60,6 @@ static size_t rewrite_instr(pid_t child, uint32_t start, size_t size, instr_tabl
 		 * For this call to ptrace, an error can be detected with errno.
 		 *
 		 */
-		instr = ptrace(PTRACE_PEEKTEXT, child, addr, 0);		
 
 		if (errno != 0)
 			error("ptrace failed");
@@ -170,7 +169,7 @@ int main(int argc, char** argv)
 	n = rewrite_text(child, argv[1], table);
 	pr("parent rewrote child text\n");
 	fprintf(stderr, "%zu divw instr in child program\n", n);
-	ptrace(PTRACE_CONT, child,0,0);
+
 	for (;;) {
 
 		c = waitpid(child, &status, 0);
