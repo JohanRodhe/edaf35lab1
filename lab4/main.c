@@ -64,13 +64,14 @@ static size_t rewrite_instr(pid_t child, uint32_t start, size_t size, instr_tabl
 
 		if (errno != 0)
 			error("ptrace failed");
-		if (instr_field(instr, 21, 10) == EO_DIVW) {
+
+		if (instr_field(instr, 21, 10) == EO_DIVW) 
 			ptrace(PTRACE_POKETEXT, child, addr, 0);
-			install_instr(table, addr, instr);
-		} 
+		 
 		if (instr_primary(instr) == PO_X
 			&& instr_field(instr, 21, 10) == EO_DIVW) {
 			install_instr(table, addr, instr);
+			pr("%p\n", addr);
 			n += 1;
 		}
 	}
@@ -174,6 +175,7 @@ int main(int argc, char** argv)
 	pr("parent rewrote child text\n");
 	fprintf(stderr, "%zu divw instr in child program\n", n);
 	ptrace(PTRACE_CONT, child,0,0);
+
 	for (;;) {
 
 		c = waitpid(child, &status, 0);
@@ -188,12 +190,13 @@ int main(int argc, char** argv)
 			error("parent expected a stopped child");
 
 		pr("parent found stopped child\n");
-		pr("%d\n", addr);	
 		ptrace(PTRACE_GETREGS, child, 0, &regs); // MODIFY!
 		addr = regs.nip;
-		pr("%d\n", addr);
-		instr = ptrace(PTRACE_PEEKTEXT, child, addr, 0); // MODIFY!		
-		ptrace(PTRACE_SINGLESTEP, child,0,0);
+		instr = lookup_instr(table, addr); //MODIFY!
+		ptrace(PTRACE_POKETEXT, child, addr, instr);
+		ptrace(PTRACE_SINGLESTEP, child, 0, 0);
+		ptrace(PTRACE_POKETEXT, child, addr, 0);
+		ptrace(PTRACE_CONT, child, 0, 0);
 		if (instr == 0
 			&& (instr = lookup_instr(table, addr)) != 0
 			&& instr_primary(instr) == PO_X
