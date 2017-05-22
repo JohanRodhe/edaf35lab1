@@ -8,12 +8,12 @@ all: $(OUT)
 	./$(OUT) p0 > output
 	diff output correct
 	@echo PASS p0 test
-	#(cd gzip;time ./gzip input.compressed 2 > output; diff output correct)
-	#(cd gzip;time ../$(OUT) gzip input.compressed 2 > output; diff output correct)
-	#@echo PASS gzip test
-	#(cd twolf;time ./twolf test > output; diff output correct)
-	#(cd twolf;time ../$(OUT) twolf test > output; diff output correct)
-	#@echo PASS twolf test
+	(cd gzip;time ./gzip input.compressed 2 > output; diff output correct)
+	(cd gzip;time ../$(OUT) gzip input.compressed 2 > output; diff output correct)
+	@echo PASS gzip test
+	(cd twolf;time ./twolf test > output; diff output correct)
+	(cd twolf;time ../$(OUT) twolf test > output; diff output correct)
+	@echo PASS twolf test
 
 $(OUT): $(OBJS)
 	$(CC) $(OBJS) -o $(OUT)
