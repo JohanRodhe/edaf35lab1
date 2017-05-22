@@ -60,10 +60,12 @@ static size_t rewrite_instr(pid_t child, uint32_t start, size_t size, instr_tabl
 		 * For this call to ptrace, an error can be detected with errno.
 		 *
 		 */
-
+		instr = ptrace(PTRACE_PEEKTEXT, child,addr);
+		
 		if (errno != 0)
 			error("ptrace failed");
-
+		if (instr_primary(instr) == EO_DIVW) {
+			ptrace(
 		if (instr_primary(instr) == PO_X
 			&& instr_field(instr, 21, 10) == EO_DIVW) {
 			install_instr(table, addr, instr);
@@ -145,11 +147,11 @@ int main(int argc, char** argv)
 		divfp = NULL;
 
 	child = fork();
-
+		
 	if (child == 0) {
 
 		pr("child is %d\n", getpid());
-
+		ptrace(PTRACE_TRACEME, &getpid());	
 		execve(argv[1], argv+1, NULL);
 		error("child execve failed");
 
