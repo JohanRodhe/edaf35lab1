@@ -1,36 +1,26 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "listmalloc.h"
 
-#define META_SIZE sizeof(struct block_info)
-void *head = NULL;
-typedef struct block_info block_info;
+void* head = NULL;
 
-struct block_info {
-	size_t size;
-	struct block_info *next;
-	int is_free;
-};
-
-block_info* find_available_block(block_info **last, size_t size) {
+block_info* find_available_block(block_info** last, size_t size) {
 	block_info* current = head;
 	while(current && !(current->is_free && current->size >= size)) {
-		//printf("looping through list\n");
 		*last = current;
 		current = current->next;
 	} 
 	return current;
 }
 
-block_info *req_space(block_info* last, size_t size) {
+block_info* req_space(block_info* last, size_t size) {
 	block_info *block;
 	block = sbrk(0);
-	void *req = sbrk(size + META_SIZE);
+	void* req = sbrk(size + BLOCK_SIZE);
 	if (req == (void*) -1) {
-		//printf("sbrk failed \n");
 		return NULL;
 	}
-	//printf("sbrk used\n");
 	if (last) {
 		last->next = block;
 	}
@@ -41,27 +31,24 @@ block_info *req_space(block_info* last, size_t size) {
 	return block;
 }
 
-void *malloc(size_t size) {
-	block_info *block;
+void* malloc(size_t size) {
+	block_info* block;
 
 	if (!head) {
 		block = sbrk(0);
-		void *req = sbrk(size + META_SIZE);
+		void* req = sbrk(size + BLOCK_SIZE);
 		if (req == (void*) -1) {
 			return NULL;
 		}
-		//printf("first sbrk used\n");
-
 		block->size = size;
 		block->next = NULL;
 		block->is_free = 0;
 
 		head = block;
 	} else {
-		block_info *last = head;
+		block_info* last = head;
 		block = find_available_block(&last, size);
 		if (!block) {
-			//printf("did not find available block\n");
 			block = req_space(last, size);
 			if (!block) {
 				return NULL;
@@ -79,10 +66,19 @@ void free(void* ptr) {
 	if (!ptr) {
 		return;
 	}
-	block_info* block = (block_info*)ptr - 1;
-	block->is_free = 1;
-	//printf("%d\n",block->size);
-	//printf("memory set free \n");
+	block_info* block = (block_info*) ptr - 1;
+	if (block == head){
+		block->is_free = 1;
+		//sbrk(-block->size - BLOCK_SIZE)
+		//head = NULL;
+	} else {
+		block_info* prev = head;
+		block_info* next = block->next;
+		while(prev->next != block) {
+			prev = prev->next;
+		}
+		block->is_free = 1;
+	}
 	return;
 }
 
@@ -93,14 +89,4 @@ void* realloc(void* ptr, size_t new_size) {
 void* calloc(size_t size) {
 
 }
-
-int main()
-{
-    int* ptr1 = malloc(8);
-    assert(ptr1);
-	int* ptr2 = malloc(8);
-	assert(ptr2);
-	free(ptr1);
-	int* ptr3 = malloc(4);
-	assert(ptr3);
-}
+	
