@@ -1,6 +1,6 @@
 gawkfts.lo: gawkfts.c /usr/include/stdc-predef.h config.h ext_custom.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/limits.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/syslimits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/syslimits.h \
  /usr/include/limits.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -13,7 +13,7 @@ gawkfts.lo: gawkfts.c /usr/include/stdc-predef.h config.h ext_custom.h \
  /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/sys/param.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
+ /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h \
  /usr/include/x86_64-linux-gnu/sys/types.h \
  /usr/include/x86_64-linux-gnu/bits/types.h \
  /usr/include/x86_64-linux-gnu/bits/typesizes.h /usr/include/time.h \
@@ -67,9 +67,9 @@ config.h:
 
 ext_custom.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/limits.h:
+/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/limits.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed/syslimits.h:
+/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed/syslimits.h:
 
 /usr/include/limits.h:
 
@@ -97,7 +97,7 @@ ext_custom.h:
 
 /usr/include/x86_64-linux-gnu/sys/param.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
+/usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h:
 
 /usr/include/x86_64-linux-gnu/sys/types.h:
 

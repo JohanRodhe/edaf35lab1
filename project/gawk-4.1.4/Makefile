@@ -312,12 +312,12 @@ distcleancheck_listfiles = find . -type f -print
 
 # Directory for gawk's data files. Automake supplies datadir.
 pkgdatadir = $(datadir)/awk
-ACLOCAL = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/missing aclocal-1.15
+ACLOCAL = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/missing autoconf
-AUTOHEADER = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/missing autoheader
-AUTOMAKE = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/missing automake-1.15
+AUTOCONF = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/missing autoconf
+AUTOHEADER = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/missing autoheader
+AUTOMAKE = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/missing automake-1.15
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -359,7 +359,7 @@ LTLIBICONV = -liconv
 LTLIBINTL = 
 LTLIBOBJS = 
 LTLIBSIGSEGV = 
-MAKEINFO = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/missing makeinfo
+MAKEINFO = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/missing makeinfo
 MKDIR_P = /bin/mkdir -p
 MSGFMT = /usr/bin/msgfmt
 MSGFMT_015 = /usr/bin/msgfmt
@@ -376,7 +376,7 @@ PATH_SEPARATOR = :
 POSUB = po
 SED = /bin/sed
 SET_MAKE = 
-SHELL = /bin/sh
+SHELL = /bin/bash
 SOCKET_LIBS = 
 STRIP = 
 USE_NLS = yes
@@ -384,12 +384,12 @@ VERSION = 4.1.4
 XGETTEXT = /usr/bin/xgettext
 XGETTEXT_015 = /usr/bin/xgettext
 XGETTEXT_EXTRA_OPTIONS = 
-YACC = yacc
+YACC = bison -y
 YFLAGS = 
-abs_builddir = /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4
-abs_srcdir = /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4
-abs_top_builddir = /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4
-abs_top_srcdir = /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4
+abs_builddir = /home/ninjaunix/edaf35lab1/project/gawk-4.1.4
+abs_srcdir = /home/ninjaunix/edaf35lab1/project/gawk-4.1.4
+abs_top_builddir = /home/ninjaunix/edaf35lab1/project/gawk-4.1.4
+abs_top_srcdir = /home/ninjaunix/edaf35lab1/project/gawk-4.1.4
 ac_ct_CC = gcc
 acl_shlibext = so
 am__include = include
@@ -417,7 +417,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/johan/Dokument/Skola/os_edaf35/gawk-4.1.4/install-sh
+install_sh = ${SHELL} /home/ninjaunix/edaf35lab1/project/gawk-4.1.4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -430,6 +430,7 @@ pkgextensiondir = ${pkglibdir}
 prefix = /usr/local
 program_transform_name = s,x,x,
 psdir = ${docdir}
+runstatedir = ${localstatedir}/run
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
 srcdir = .
@@ -536,7 +537,8 @@ base_sources = \
 	str_array.c \
 	symbol.c \
 	version.c \
-    listmalloc.c
+	listmalloc.h \
+	listmalloc.c 
 	#xalloc.h
 
 gawk_SOURCES = $(base_sources)
