@@ -3,7 +3,6 @@
 
 
 void* head = NULL;
-typedef struct block_info block_info;
 
 	/*
 	finds the next available block with enough size
