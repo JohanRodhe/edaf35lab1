@@ -65,7 +65,7 @@
 #define HAVE_GRANTPT 1
 
 /* Do we have history_list? */
-/* #undef HAVE_HISTORY_LIST */
+#define HAVE_HISTORY_LIST 1
 
 /* Define if you have the iconv() function and it works. */
 /* #undef HAVE_ICONV */
@@ -98,7 +98,7 @@
 #define HAVE_LIBINTL_H 1
 
 /* Define to 1 if you have a fully functional readline library. */
-/* #undef HAVE_LIBREADLINE */
+#define HAVE_LIBREADLINE 1
 
 /* Define if you have the libsigsegv library. */
 /* #undef HAVE_LIBSIGSEGV */
