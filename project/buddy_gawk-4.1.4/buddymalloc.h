@@ -1,7 +1,9 @@
 #ifndef BUDDY_MALLOC 
 #define BUDDY_MALLOC
+
 #define MAX_POOL (26)
 #define BLOCK_SIZE sizeof(struct block_info)
+
 #include <stddef.h>
 
 typedef struct block_info block_info;

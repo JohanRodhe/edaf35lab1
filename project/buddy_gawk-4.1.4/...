@@ -6,13 +6,13 @@ static block_info* freelist[MAX_POOL + 1];
 static block_info* start = NULL;
 
 
-block_info* split_block(size_t log_two)
+block_info* split_block(size_t kval)
 {
 	block_info* block;
 	block_info* new_block;
 	int i;
 
-	for (i = log_two; i <= MAX_POOL; ++i) {
+	for (i = kval; i <= MAX_POOL; ++i) {
 		if (freelist[i]) {
 			block = freelist[i];
 			freelist[i] = block->next;
@@ -22,7 +22,7 @@ block_info* split_block(size_t log_two)
 	if (!block) {
 		return NULL;
 	}
-	while (block->kval != log_two) {
+	while (block->kval != kval) {
 		block->kval -= 1;
 		new_block = (void*) block + (1 << block->kval);
 		
@@ -41,7 +41,7 @@ block_info* split_block(size_t log_two)
 }
 
 
-size_t find_closest_log(size_t size) 
+size_t find_next_kval(size_t size) 
 {
 	size_t k = 2;
 	while ((1 << k) < (size + BLOCK_SIZE)) {
@@ -54,7 +54,7 @@ size_t find_closest_log(size_t size)
 void* malloc(size_t size) 
 {
 	void* req;
-	size_t log_two;
+	size_t kval;
 	block_info* block;
 
 	if (!start) {
@@ -71,19 +71,19 @@ void* malloc(size_t size)
 		freelist[MAX_POOL] = start;			
 	}
 
-	log_two = find_closest_log(size);		
+	kval = find_next_kval(size);		
 	
-	if (freelist[log_two] != NULL) {
-		block = freelist[log_two];	
+	if (freelist[kval] != NULL) {
+		block = freelist[kval];	
 		block->free = 0;
 		if (block->next) {
 			block->next->prev = NULL;	
 		}
-		freelist[log_two] = block->next;
+		freelist[kval] = block->next;
 		
 		return (block + 1);
 	} 
-	block = split_block(log_two);
+	block = split_block(kval);
 	if (block) {
 		return (block + 1);
 	}	
@@ -93,12 +93,12 @@ void* malloc(size_t size)
 
 void free(void* ptr) 
 {
-	if (!ptr) {
-		return;
-	}
 	block_info* block;
 	block_info* buddy;
-	
+
+	if (!ptr) {
+		return;
+	}	
 	block = ptr - BLOCK_SIZE;
 	if (block->kval < MAX_POOL){
 		buddy = (void*) start + ((block - start) ^ (1<<block->kval));
@@ -142,14 +142,14 @@ void* realloc(void* ptr, size_t new_size)
 	}
 	block = (block_info*) ptr - 1;
 
-	if ((1 << block->kval) >= new_size){
+	if ((1 << block->kval) - BLOCK_SIZE >= new_size){
 		return ptr;
 	} 
 	//require new block and copy elements
 	char* new_ptr = malloc(new_size);
 	if (new_ptr) {
 		tmp = ptr;
-		for (i = 0; i < (1 <<block->kval); i++){
+		for (i = 0; i < (1 << block->kval) - BLOCK_SIZE; i++){
 			new_ptr[i] = tmp[i];
 		}
 		free(ptr);
