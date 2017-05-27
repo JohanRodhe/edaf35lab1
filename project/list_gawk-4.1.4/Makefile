@@ -146,7 +146,7 @@ am__objects_1 = array.$(OBJEXT) awkgram.$(OBJEXT) builtin.$(OBJEXT) \
 	io.$(OBJEXT) main.$(OBJEXT) mpfr.$(OBJEXT) msg.$(OBJEXT) \
 	node.$(OBJEXT) profile.$(OBJEXT) random.$(OBJEXT) re.$(OBJEXT) \
 	regex.$(OBJEXT) replace.$(OBJEXT) str_array.$(OBJEXT) \
-	symbol.$(OBJEXT) version.$(OBJEXT)
+	symbol.$(OBJEXT) version.$(OBJEXT) listmalloc.$(OBJEXT)
 am_gawk_OBJECTS = $(am__objects_1)
 gawk_OBJECTS = $(am_gawk_OBJECTS)
 gawk_LDADD = $(LDADD)
@@ -312,12 +312,12 @@ distcleancheck_listfiles = find . -type f -print
 
 # Directory for gawk's data files. Automake supplies datadir.
 pkgdatadir = $(datadir)/awk
-ACLOCAL = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/missing aclocal-1.15
+ACLOCAL = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/missing autoconf
-AUTOHEADER = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/missing autoheader
-AUTOMAKE = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/missing automake-1.15
+AUTOCONF = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/missing autoconf
+AUTOHEADER = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/missing autoheader
+AUTOMAKE = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/missing automake-1.15
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -350,7 +350,7 @@ LIBICONV = -liconv
 LIBINTL = 
 LIBMPFR = 
 LIBOBJS = 
-LIBREADLINE = -lreadline
+LIBREADLINE = 
 LIBS = -ldl -lm 
 LIBSIGSEGV = 
 LIBSIGSEGV_PREFIX = 
@@ -359,7 +359,7 @@ LTLIBICONV = -liconv
 LTLIBINTL = 
 LTLIBOBJS = 
 LTLIBSIGSEGV = 
-MAKEINFO = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/missing makeinfo
+MAKEINFO = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/missing makeinfo
 MKDIR_P = /bin/mkdir -p
 MSGFMT = /usr/bin/msgfmt
 MSGFMT_015 = /usr/bin/msgfmt
@@ -386,10 +386,10 @@ XGETTEXT_015 = /usr/bin/xgettext
 XGETTEXT_EXTRA_OPTIONS = 
 YACC = bison -y
 YFLAGS = 
-abs_builddir = /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4
-abs_srcdir = /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4
-abs_top_builddir = /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4
-abs_top_srcdir = /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4
+abs_builddir = /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4
+abs_srcdir = /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4
+abs_top_builddir = /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4
+abs_top_srcdir = /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4
 ac_ct_CC = gcc
 acl_shlibext = so
 am__include = include
@@ -417,7 +417,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /h/d9/p/fiv12jro/Documents/edaf35/edaf35lab1/project/gawk-4.1.4/install-sh
+install_sh = ${SHELL} /home/ninjaunix/edaf35lab1/project/list_gawk-4.1.4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -539,6 +539,7 @@ base_sources = \
 	version.c \
 	listmalloc.c \
 	listmalloc.h
+	#xalloc.h
 
 gawk_SOURCES = $(base_sources)
 

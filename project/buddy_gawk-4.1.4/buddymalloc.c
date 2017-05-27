@@ -90,34 +90,41 @@ void* malloc(size_t size)
 	return NULL;
 }
 
+void free_block(block_info* block) 
+{
+if (block->prev) {
+			block->prev->next = block->next;
+			if (block->next) {
+				block->next->prev = block->prev;
+			}
+		} else {
+			freelist[block->kval] = block->next;
+			if (block->next) {
+				block->next->prev = NULL;
+			}	
+		}
+}
+
 
 void free(void* ptr) 
 {
 	block_info* block;
 	block_info* buddy;
-
+	
 	if (!ptr) {
 		return;
 	}	
 	block = ptr - BLOCK_SIZE;
-	if (block->kval < MAX_POOL){
-		buddy = (void*) start + ((block - start) ^ (1<<block->kval));
-	} 
-	if (buddy && buddy->free == 1 && block->kval == buddy->kval) {
-		if (buddy->prev) {
-			buddy->prev->next = buddy->next;
-			if (buddy->next) {
-				buddy->next->prev = buddy->prev;
-			}
-		} else {
-			freelist[buddy->kval] = buddy->next;
-			if (buddy->next) {
-				buddy->next->prev = NULL;
-			}	
-		}
+	buddy = (void*) start + ((block - start) ^ (1<<block->kval));
+ 
+	while (block->kval < MAX_POOL && buddy && buddy->free == 1 && block->kval == buddy->kval) {
+		free_block(buddy);
 		if (buddy < block) {
 			block = buddy;
 		}
+		block->kval++;
+		buddy = (void*) start + ((block - start) ^ (1<<block->kval));
+
 	}
 	block->next = freelist[block->kval];
 	block->prev = NULL;
@@ -126,7 +133,7 @@ void free(void* ptr)
 	if (block->next) {
 		block->next->prev = block;
 	}
-	freelist[block->kval] = block;	
+	freelist[block->kval] = block;
 	
 }
 

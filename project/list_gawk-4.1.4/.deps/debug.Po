@@ -70,11 +70,7 @@ debug.o: debug.c /usr/include/stdc-predef.h awk.h config.h custom.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h getopt.h \
  /usr/include/x86_64-linux-gnu/bits/unistd.h regex.h dfa.h regex.h \
- gawkapi.h /usr/include/x86_64-linux-gnu/sys/wait.h cmd.h \
- /usr/include/readline/readline.h /usr/include/readline/rlstdc.h \
- /usr/include/readline/rltypedefs.h /usr/include/readline/keymaps.h \
- /usr/include/readline/chardefs.h /usr/include/readline/tilde.h \
- /usr/include/readline/history.h
+ gawkapi.h /usr/include/x86_64-linux-gnu/sys/wait.h cmd.h
 
 /usr/include/stdc-predef.h:
 
@@ -291,17 +287,3 @@ gawkapi.h:
 /usr/include/x86_64-linux-gnu/sys/wait.h:
 
 cmd.h:
-
-/usr/include/readline/readline.h:
-
-/usr/include/readline/rlstdc.h:
-
-/usr/include/readline/rltypedefs.h:
-
-/usr/include/readline/keymaps.h:
-
-/usr/include/readline/chardefs.h:
-
-/usr/include/readline/tilde.h:
-
-/usr/include/readline/history.h:
